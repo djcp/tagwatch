@@ -65,9 +65,9 @@ log_if_verbose "Watching: $WATCHED_DIR, PID: $$\n"
 
 watch_command(){
   if [ "$OSTYPE" = "linux-gnu" ]; then
-    inotifywait --exclude="/$EXCLUDE_REGEX/"\
+    inotifywait -q --exclude="/$EXCLUDE_REGEX/"\
       -m -r -e modify -e move -e create -e delete $WATCHED_DIR
-  elif [ "${OSTYPE:0:6}" == "darwin" ]; then
+  elif [ "${OSTYPE:0:6}" = "darwin" ]; then
     echo "You're getting a mac, dude."
   else
     echo "We don't do windows."

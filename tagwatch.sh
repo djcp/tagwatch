@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 EXCLUDE_REGEX_DEFAULT="tags.*|log/|tmp/|\.git/|coverage/|doc"
 SCRIPTNAME=`basename $0`
@@ -41,7 +41,7 @@ Yubnub
 
 log_if_verbose() {
   if [ "$VERBOSE" -eq 1 ]; then
-    echo -n $1
+    echo -ne $1
   fi
 }
 
@@ -63,9 +63,18 @@ PREVIOUS_RUN_TIME=`$TIME_COMMAND`
 
 log_if_verbose "Watching: $WATCHED_DIR, PID: $$\n"
 
-inotifywait --exclude="/$EXCLUDE_REGEX/"\
-  -m -r -e modify -e move -e create -e delete $WATCHED_DIR | \
-  while read line; do
+watch_command(){
+  if [ "$OSTYPE" = "linux-gnu" ]; then
+    inotifywait --exclude="/$EXCLUDE_REGEX/"\
+      -m -r -e modify -e move -e create -e delete $WATCHED_DIR
+  elif [ "${OSTYPE:0:6}" == "darwin" ]; then
+    echo "You're getting a mac, dude."
+  else
+    echo "We don't do windows."
+  fi
+}
+
+watch_command | while read line; do
 
   NOW=`$TIME_COMMAND`
 
@@ -79,4 +88,5 @@ inotifywait --exclude="/$EXCLUDE_REGEX/"\
   else
     log_if_verbose '.'
   fi
+
 done

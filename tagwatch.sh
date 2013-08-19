@@ -2,6 +2,7 @@
 
 EXCLUDE_REGEX_DEFAULT="tags.*|log/|tmp/|\.git/|coverage/|doc"
 SCRIPTNAME=`basename $0`
+CTAGS_DEFAULT_OPTIONS="-R --exclude=*.js --langmap=ruby:+.rake.builder.rjs --languages=-javascript"
 
 help() {
   cat <<Yubnub
@@ -11,7 +12,7 @@ ABOUT:
   $SCRIPTNAME - Auto updates ctags files via linux inotify events.
 
 $SCRIPTNAME watches a directory recursively for file changes and automatically
-updates your ctags file when they occur.  
+updates your exuberant-ctags "tags" file.
 
 It subscribes to filesystem events via inotifywait and should impose very
 little overhead. It is aware of file changes spawned by anything - your editor,
@@ -29,6 +30,20 @@ OPTIONS:
       Defaults to pwd
   -e: An extended POSIX regex that defines what files / directories to ignore.
       Defaults to: "$EXCLUDE_REGEX_DEFAULT"
+  -c: Options passed to the exuberant-ctags command, the defaults are fairly
+      rails specific.
+      Defaults to: "$CTAGS_DEFAULT_OPTIONS"
+
+RC Configuration:
+
+Files in the watched_directory named ".tagwatch.rc" are sourced and allow you
+to configure default options. Currently, you can configured -e (the regex that
+defines which updated files / paths to ignore) and -c (the default ctags
+options).
+
+  # ./.tagwatch.rc
+  EXCLUDE_REGEX="tags.*|log/|tmp/|\.git/|coverage/|doc"
+  CTAGS_DEFAULT_OPTIONS="-R --exclude='*.js' --langmap='ruby:+.rake.builder.rjs' --languages=-javascript"
 
 USAGE:
 
@@ -45,32 +60,45 @@ log_if_verbose() {
   fi
 }
 
-while getopts "hvd:e:" opt; do
+source_rc_optionally() {
+  RC_FILE="$1/.tagwatch.rc"
+  if [ -e $RC_FILE ]; then
+    log_if_verbose "Using RC: $RC_FILE"
+    . $RC_FILE
+  fi
+}
+
+while getopts "hvd:e:c:" opt; do
   case $opt in
     h) help ;;
     v) VERBOSE=1 ;;
     d) WATCHED_DIR=$OPTARG ;;
     e) EXCLUDE_REGEX=$OPTARG ;;
+    c) CTAGS_OPTIONS=$OPTARG ;;
   esac
 done
 
 WATCHED_DIR=${WATCHED_DIR:-`pwd`}
+source_rc_optionally $WATCHED_DIR
+
 VERBOSE=${VERBOSE:-0}
+
 EXCLUDE_REGEX=${EXCLUDE_REGEX:-$EXCLUDE_REGEX_DEFAULT}
+CTAGS_OPTIONS=${CTAGS_OPTIONS:-$CTAGS_DEFAULT_OPTIONS}
 
 TIME_COMMAND="date +%s"
 PREVIOUS_RUN_TIME=`$TIME_COMMAND`
 
+log_if_verbose "EXCLUDE_REGEX: $EXCLUDE_REGEX\n"
+log_if_verbose "CTAGS_OPTIONS: $CTAGS_OPTIONS\n"
 log_if_verbose "Watching: $WATCHED_DIR, PID: $$\n"
 
 watch_command(){
   if [ "$OSTYPE" = "linux-gnu" ]; then
     inotifywait -q --exclude="/$EXCLUDE_REGEX/"\
       -m -r -e modify -e move -e create -e delete $WATCHED_DIR
-  elif [ "${OSTYPE:0:6}" = "darwin" ]; then
-    echo "You're getting a mac, dude."
   else
-    echo "We don't do windows."
+    echo "Sorry, only linux (2.6+) is supported."
   fi
 }
 
@@ -79,8 +107,7 @@ watch_command | while read line; do
   NOW=`$TIME_COMMAND`
 
   if [ "$NOW" -gt "$PREVIOUS_RUN_TIME" ]; then
-    ctags -f $WATCHED_DIR/tags -R --exclude='*.js' \
-      --langmap='ruby:+.rake.builder.rjs' --languages=-javascript $WATCHED_DIR/
+    ctags -f $WATCHED_DIR/tags $CTAGS_OPTIONS $WATCHED_DIR/
 
     log_if_verbose "\nupdated because of $line on `date`\n"
 

@@ -63,7 +63,7 @@ log_if_verbose() {
 source_rc_optionally() {
   RC_FILE="$1/.tagwatch.rc"
   if [ -e $RC_FILE ]; then
-    log_if_verbose "Using RC: $RC_FILE"
+    log_if_verbose "Using RC: $RC_FILE\n"
     . $RC_FILE
   fi
 }

@@ -3,9 +3,11 @@
 # trap "echo 'EXIT!'; exit" SIGINT SIGTERM EXIT
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
+SCRIPTNAME=`basename $0`
 
 start_tagwatch() {
-  GIT_REPOS=`find $1 -type d -name '.git' -print0 | xargs -0 -I'{}' echo "{}" | sed 's/\.git$//'`
+  ROOT_DIR=${1:-$HOME}
+  GIT_REPOS=`find $ROOT_DIR -type d -name '.git' -print0 | xargs -0 -I'{}' echo "{}" | sed 's/\.git$//'`
 
   for REPO in $GIT_REPOS; do
     echo "watching $REPO"
@@ -25,7 +27,27 @@ status_tagwatch() {
 }
 
 usage() {
-  echo "do stuff"
+  cat <<Yubnub
+
+ABOUT:
+
+  $SCRIPTNAME - Finds git repos to watch for changes.
+
+$SCRIPTNAME is a harness around 'tagwatch.sh' that will recursively find git
+repos and watch them for file changes.  Most of the magic is in 'tagwatch.sh',
+as all this does is spin up one 'tagwatch.sh' instance per repo found. This
+allows for per-project RC configuration.
+
+OPTIONS:
+
+  start ROOT_DIRECTORY: Look for git repositories under ROOT_DIRECTORY. If
+                        no ROOT_DIRECTORY is given, start from the user's HOME.
+  status: Lists the watched git repos
+  stop:   Kill all running 'tagwatch.sh' instances
+  usage:  This message
+Yubnub
+
+  exit
 }
 
 ACTION=$1

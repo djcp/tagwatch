@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXCLUDE_REGEX_DEFAULT="tags.*|log/|tmp/|\.git/|coverage/|doc"
+EXCLUDE_REGEX_DEFAULT="tags.*|log/|tmp/|\.git/|coverage/|doc/|public/"
 SCRIPTNAME=`basename $0`
 CTAGS_DEFAULT_OPTIONS="-R --exclude=*.js --langmap=ruby:+.rake.builder.rjs --languages=-javascript"
 
@@ -95,7 +95,7 @@ log_if_verbose "Watching: $WATCHED_DIR, PID: $$\n"
 
 watch_command(){
   if [ "$OSTYPE" = "linux-gnu" ]; then
-    inotifywait -q --exclude="/$EXCLUDE_REGEX/"\
+    inotifywait -q --excludei="$EXCLUDE_REGEX"\
       -m -r -e modify -e move -e create -e delete $WATCHED_DIR
   else
     echo "Sorry, only linux (2.6+) is supported."

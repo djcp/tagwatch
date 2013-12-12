@@ -1,0 +1,11 @@
+Package: tagwatch
+Version: 1.0.0-1
+Section: main
+Priority: optional
+Architecture: all
+Depends: python-pip, libyaml-dev, exuberant-ctags, python-dev
+Maintainer: Dan Collis-Puro, thoughtbot <djcp+tagwatch@thoughtbot.com>
+Homepage: http://github.com/thoughtbot/
+Description: tagwatch watches directories recursively for file changes and
+ automatically updates your exuberant-ctags "tags" file.
+

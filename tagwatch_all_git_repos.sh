@@ -18,7 +18,7 @@ start_tagwatch() {
 stop_tagwatch() {
   echo 'Stopping. . .'
   pkill -u $USER 'tagwatch.sh'
-  pkill -u $USER 'inotifywait'
+  pkill -u $USER 'watchmedo'
 }
 
 status_tagwatch() {

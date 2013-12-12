@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXCLUDE_REGEX_DEFAULT="tags.*|log/|tmp/|\.git/|coverage/|doc/|public/"
+EXCLUDE_GLOB_DEFAULT="*/tags.*;*/log/*;*/tmp/*;*/.git/*;*/coverage/*;*/doc/*;*/public/*"
 SCRIPTNAME=`basename $0`
 CTAGS_DEFAULT_OPTIONS="-R --exclude=*.js --langmap=ruby:+.rake.builder.rjs --languages=-javascript"
 
@@ -9,17 +9,21 @@ help() {
 
 ABOUT:
 
-  $SCRIPTNAME - Auto updates ctags files via linux inotify events.
+  $SCRIPTNAME - Auto updates ctags files via kernel-level filesystem events.
 
 $SCRIPTNAME watches a directory recursively for file changes and automatically
 updates your exuberant-ctags "tags" file.
 
-It subscribes to filesystem events via inotifywait and should impose very
+It subscribes to filesystem events via python's watchmedo and should impose very
 little overhead. It is aware of file changes spawned by anything - your editor,
 your source control system, etc. It will not update more than once a second.
 
-It requires exuberant-ctags and inotifywait. Install "exuberant-ctags" and
-"inotify-tools" on modern debian-derived systems.
+LINUX:
+It requires exuberant-ctags and watchmedo. Install "exuberant-ctags" and run
+"pip install watchmedo" on modern debian-derived systems.
+
+OS X:
+FIXME
 
 OPTIONS:
 
@@ -28,8 +32,8 @@ OPTIONS:
       occurred too quickly after the last update.
   -d: the directory to watch (the "tags" file is written here too).
       Defaults to pwd
-  -e: An extended POSIX regex that defines what files / directories to ignore.
-      Defaults to: "$EXCLUDE_REGEX_DEFAULT"
+  -e: A shell glob pattern that defines what files / directories to ignore.
+      Defaults to: "$EXCLUDE_GLOB_DEFAULT"
   -c: Options passed to the exuberant-ctags command, the defaults are fairly
       rails specific.
       Defaults to: "$CTAGS_DEFAULT_OPTIONS"
@@ -37,12 +41,10 @@ OPTIONS:
 RC Configuration:
 
 Files in the watched_directory named ".tagwatch.rc" are sourced and allow you
-to configure default options. Currently, you can configured -e (the regex that
-defines which updated files / paths to ignore) and -c (the default ctags
-options).
+to configure default options. Currently, you can configure -e and -c.
 
   # ./.tagwatch.rc
-  EXCLUDE_REGEX="tags.*|log/|tmp/|\.git/|coverage/|doc"
+  EXCLUDE_GLOB="*/tags.*;*/log/*;*/tmp/*;*/.git/*;*/coverage/*;*/doc/*"
   CTAGS_DEFAULT_OPTIONS="-R --exclude='*.js' --langmap='ruby:+.rake.builder.rjs' --languages=-javascript"
 
 USAGE:
@@ -73,7 +75,7 @@ while getopts "hvd:e:c:" opt; do
     h) help ;;
     v) VERBOSE=1 ;;
     d) WATCHED_DIR=$OPTARG ;;
-    e) EXCLUDE_REGEX=$OPTARG ;;
+    e) EXCLUDE_GLOB=$OPTARG ;;
     c) CTAGS_OPTIONS=$OPTARG ;;
   esac
 done
@@ -83,23 +85,18 @@ source_rc_optionally $WATCHED_DIR
 
 VERBOSE=${VERBOSE:-0}
 
-EXCLUDE_REGEX=${EXCLUDE_REGEX:-$EXCLUDE_REGEX_DEFAULT}
+EXCLUDE_GLOB=${EXCLUDE_GLOB:-$EXCLUDE_GLOB_DEFAULT}
 CTAGS_OPTIONS=${CTAGS_OPTIONS:-$CTAGS_DEFAULT_OPTIONS}
 
 TIME_COMMAND="date +%s"
 PREVIOUS_RUN_TIME=`$TIME_COMMAND`
 
-log_if_verbose "EXCLUDE_REGEX: $EXCLUDE_REGEX\n"
+log_if_verbose "EXCLUDE_GLOB: $EXCLUDE_GLOB\n"
 log_if_verbose "CTAGS_OPTIONS: $CTAGS_OPTIONS\n"
 log_if_verbose "Watching: $WATCHED_DIR, PID: $$\n"
 
 watch_command(){
-  if [ "$OSTYPE" = "linux-gnu" ]; then
-    inotifywait -q --excludei="$EXCLUDE_REGEX"\
-      -m -r -e modify -e move -e create -e delete $WATCHED_DIR
-  else
-    echo "Sorry, only linux (2.6+) is supported."
-  fi
+  watchmedo shell-command --recursive --ignore-pattern="$EXCLUDE_GLOB" $WATCHED_DIR
 }
 
 watch_command | while read line; do
@@ -114,6 +111,7 @@ watch_command | while read line; do
     PREVIOUS_RUN_TIME=`$TIME_COMMAND`
   else
     log_if_verbose '.'
+    log_if_verbose "\nignored $line on `date`\n"
   fi
 
 done

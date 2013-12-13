@@ -2,3 +2,4 @@ pkg-build/tagwatch.deb
 pkg-build/tagwatch/usr/bin/tagwatch
 pkg-build/tagwatch/usr/bin/tagwatch_all_git_repos
 test/.vagrant
+apt-repo/

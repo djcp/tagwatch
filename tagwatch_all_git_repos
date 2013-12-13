@@ -11,13 +11,13 @@ start_tagwatch() {
 
   for REPO in $GIT_REPOS; do
     echo "watching $REPO"
-    $DIR/tagwatch.sh -d "$REPO" &
+    $DIR/tagwatch -d "$REPO" &
   done
 }
 
 stop_tagwatch() {
   echo 'Stopping. . .'
-  pkill -u $USER 'tagwatch.sh'
+  pkill -u $USER 'tagwatch'
   pkill -u $USER 'watchmedo'
 }
 
@@ -33,9 +33,9 @@ ABOUT:
 
   $SCRIPTNAME - Finds git repos to watch for changes.
 
-$SCRIPTNAME is a harness around 'tagwatch.sh' that will recursively find git
-repos and watch them for file changes.  Most of the magic is in 'tagwatch.sh',
-as all this does is spin up one 'tagwatch.sh' instance per repo found. This
+$SCRIPTNAME is a harness around 'tagwatch' that will recursively find git
+repos and watch them for file changes.  Most of the magic is in 'tagwatch',
+as all this does is spin up one 'tagwatch' instance per repo found. This
 allows for per-project RC configuration.
 
 OPTIONS:
@@ -43,7 +43,7 @@ OPTIONS:
   start ROOT_DIRECTORY: Look for git repositories under ROOT_DIRECTORY. If
                         no ROOT_DIRECTORY is given, start from the user's HOME.
   status: Lists the watched git repos
-  stop:   Kill all running 'tagwatch.sh' instances
+  stop:   Kill all running 'tagwatch' instances
   usage:  This message
 Yubnub
 

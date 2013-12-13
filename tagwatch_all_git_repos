@@ -5,6 +5,13 @@
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 SCRIPTNAME=`basename $0`
 
+
+if [ "$OSTYPE" = "linux-gnu" ]; then
+  PROCESS_LOCATING_ARGS="-a -u $USER"
+else
+  PROCESS_LOCATING_ARGS="-lf -u $USER"
+fi
+
 start_tagwatch() {
   ROOT_DIR=${1:-$HOME}
   GIT_REPOS=`find $ROOT_DIR -type d -name '.git' -print0 | xargs -0 -I'{}' echo "{}" | sed 's/\.git$//'`
@@ -17,13 +24,13 @@ start_tagwatch() {
 
 stop_tagwatch() {
   echo 'Stopping. . .'
-  pkill -u $USER 'tagwatch'
-  pkill -u $USER 'watchmedo'
+  pkill $PROCESS_LOCATING_ARGS 'tagwatch -d'
+  pkill $PROCESS_LOCATING_ARGS 'watchmedo'
 }
 
 status_tagwatch() {
   echo 'Watching repos:'
-  pgrep -u $USER tagwatch -a | cut -f 5 -d ' ' | sort | uniq
+  pgrep $PROCESS_LOCATING_ARGS 'tagwatch -d' | cut -f 5 -d ' ' | sort | uniq
 }
 
 usage() {

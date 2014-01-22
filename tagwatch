@@ -3,6 +3,7 @@
 EXCLUDE_GLOB_DEFAULT="*/tags.*;*/log/*;*/tmp/*;*/.git/*;*/coverage/*;*/doc/*;*/public/*"
 SCRIPTNAME=`basename $0`
 CTAGS_DEFAULT_OPTIONS="-R --exclude=*.js --langmap=ruby:+.rake.builder.rjs --languages=-javascript"
+CTAGS_DEFAULT_EXECUTABLE="ctags"
 
 help() {
   cat <<Yubnub
@@ -70,13 +71,14 @@ source_rc_optionally() {
   fi
 }
 
-while getopts "hvd:e:c:" opt; do
+while getopts "hvd:e:c:C:" opt; do
   case $opt in
     h) help ;;
     v) VERBOSE=1 ;;
     d) WATCHED_DIR=$OPTARG ;;
     e) EXCLUDE_GLOB=$OPTARG ;;
     c) CTAGS_OPTIONS=$OPTARG ;;
+    C) CTAGS_EXECUTABLE=$OPTARG ;;
   esac
 done
 
@@ -86,12 +88,14 @@ source_rc_optionally $WATCHED_DIR
 VERBOSE=${VERBOSE:-0}
 
 EXCLUDE_GLOB=${EXCLUDE_GLOB:-$EXCLUDE_GLOB_DEFAULT}
+CTAGS_EXECUTABLE=${CTAGS_EXECUTABLE:-$CTAGS_DEFAULT_EXECUTABLE}
 CTAGS_OPTIONS=${CTAGS_OPTIONS:-$CTAGS_DEFAULT_OPTIONS}
 
 TIME_COMMAND="date +%s"
 PREVIOUS_RUN_TIME=`$TIME_COMMAND`
 
 log_if_verbose "EXCLUDE_GLOB: $EXCLUDE_GLOB\n"
+log_if_verbose "CTAGS_EXECUTABLE: $CTAGS_EXECUTABLE\n"
 log_if_verbose "CTAGS_OPTIONS: $CTAGS_OPTIONS\n"
 log_if_verbose "Watching: $WATCHED_DIR, PID: $$\n"
 
@@ -104,7 +108,7 @@ watch_command | while read line; do
   NOW=`$TIME_COMMAND`
 
   if [ "$NOW" -gt "$PREVIOUS_RUN_TIME" ]; then
-    ctags -f $WATCHED_DIR/tags $CTAGS_OPTIONS $WATCHED_DIR/
+    $CTAGS_EXECUTABLE -f $WATCHED_DIR/tags $CTAGS_OPTIONS $WATCHED_DIR/
 
     log_if_verbose "\nupdated because of $line on `date`\n"
 

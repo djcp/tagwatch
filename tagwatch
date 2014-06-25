@@ -2,7 +2,7 @@
 
 EXCLUDE_REGEX_DEFAULT="tags.*|log/|tmp/|\.git/|coverage/|doc/|public/"
 SCRIPTNAME=`basename $0`
-CTAGS_DEFAULT_OPTIONS="-R --exclude=*.js --langmap=ruby:+.rake.builder.rjs --languages=-javascript"
+CTAGS_DEFAULT_OPTIONS=""
 
 help() {
   cat <<Yubnub
@@ -32,7 +32,8 @@ OPTIONS:
   -e: An extended POSIX regex that defines what files / directories to ignore.
       Defaults to: "$EXCLUDE_REGEX_DEFAULT"
   -c: Options passed to the exuberant-ctags command, the defaults are fairly
-      rails specific.
+      rails specific. Note, the recommended way to configure ctags is via the
+      ~/.ctags file rather than this option
       Defaults to: "$CTAGS_DEFAULT_OPTIONS"
 
 RC Configuration:
@@ -108,7 +109,7 @@ watch_command | while read line; do
   NOW=`$TIME_COMMAND`
 
   if [ "$NOW" -gt "$PREVIOUS_RUN_TIME" ]; then
-    ctags -f $WATCHED_DIR/tags $CTAGS_OPTIONS $WATCHED_DIR/
+    (cd $WATCHED_DIR && ctags $CTAGS_OPTIONS)
 
     log_if_verbose "\nupdated because of $line on `date`\n"
 
